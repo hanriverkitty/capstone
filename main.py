@@ -33,10 +33,11 @@ async def post_msg(request:Request):
         print(data)
         if data['event']['text']:
             text_index = data['event']['text'].find('>') + 2
+            global input_message
             input_message = data['event']['text'][text_index:]
             print('\n'+input_message)
             client.chat_postMessage(channel=channel_id, text=input_message)
-        return 
+        return RedirectResponse("https://dd52-124-111-110-113.jp.ngrok.io/link/"+input_message)
     
     return 'OK'
     event = data["event"]
@@ -67,9 +68,12 @@ async def say_hello(name: str):
 
     return get_message_ts()
 
-@app.get("/link")
-def read_root(response: Response):
+@app.get("/link/{text}",response_class=RedirectResponse)
+def read_root(response: Response,text:str):
+    return input_message
     response.headers["target"] = "_blank"
+    return text
+    '''
     html_content = """
     <html>
         <body>
@@ -78,7 +82,8 @@ def read_root(response: Response):
     </html>
     """
     return HTMLResponse(content=html_content, status_code=200)
-
+    '''
+    
 def get_message_ts():
         """
         슬랙 채널 내 메세지 조회
