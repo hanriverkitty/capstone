@@ -4,11 +4,10 @@ from slack_sdk.errors import SlackApiError
 from fastapi.responses import HTMLResponse, RedirectResponse
 import requests
 import json
+from ignore import myToken,channel_id,user_id
 
 app = FastAPI()
-myToken = "xoxb-4986589220001-4971155658949-dIsXuHYydnZSQjCwOKZLvJYn"
 client = WebClient(token=myToken)
-channel_id = "C04VBKBM40G"
 input_message=""
 
 
@@ -18,7 +17,6 @@ def post_message(text):
         text=text
     )
     return response
-
 
 @app.post("/input/")
 async def post_msg(request:Request):
@@ -107,7 +105,7 @@ def get_message_ts():
         message =  message_obj["messages"]
         message_total = []
         for i in message:
-            if i['user']=="U04UQCS77J8":
+            if i['user']==user_id:
                 message_total.append(i['text'])
             
         print(message)
