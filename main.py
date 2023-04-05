@@ -34,8 +34,8 @@ async def post_msg(request:Request):
             global input_message
             input_message = data['event']['text'][text_index:]
             print('\n'+input_message)
-            client.chat_postMessage(channel=channel_id, text=input_message)
-        return RedirectResponse("https://dd52-124-111-110-113.jp.ngrok.io/link/"+input_message)
+            client.chat_postMessage(channel=channel_id, text="https://www.youtube.com/results?search_query="+input_message)
+        return #RedirectResponse("https://dd52-124-111-110-113.jp.ngrok.io/link/"+input_message)
     
     return 'OK'
     event = data["event"]
@@ -66,9 +66,9 @@ async def say_hello(name: str):
 
     return get_message_ts()
 
-@app.get("/link/{text}",response_class=RedirectResponse)
+@app.get("/link/{text}")
 def read_root(response: Response,text:str):
-    return input_message
+    return text
     response.headers["target"] = "_blank"
     return text
     '''
