@@ -53,7 +53,7 @@ async def post_msg(request:Request):
 
 @app.get("/")
 def root():
-    return post_message("안녕하세요.")
+    return post_message("안녕하세요 ㅈ같은년아.")
 
 
 @app.get("/hello/{name}")
