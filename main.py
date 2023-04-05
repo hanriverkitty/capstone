@@ -4,7 +4,7 @@ from slack_sdk.errors import SlackApiError
 from fastapi.responses import HTMLResponse, RedirectResponse
 import requests
 import json
-from ignore import myToken,channel_id,user_id
+from ignore import myToken,channel_id,user_id, ngrok_url
 
 app = FastAPI()
 client = WebClient(token=myToken)
@@ -35,7 +35,7 @@ async def post_msg(request:Request):
             input_message = data['event']['text'][text_index:]
             print('\n'+input_message)
             client.chat_postMessage(channel=channel_id, text="https://www.youtube.com/results?search_query="+input_message)
-        return #RedirectResponse("https://dd52-124-111-110-113.jp.ngrok.io/link/"+input_message)
+        return #RedirectResponse(ngrok_url+input_message)
     
     return 'OK'
     event = data["event"]
