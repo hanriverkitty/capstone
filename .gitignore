@@ -3,3 +3,4 @@ ngrok-v3-stable-windows-amd64.zip
 slack_api.py
 ngrok.exe
 ignore.py
+.gitignore
