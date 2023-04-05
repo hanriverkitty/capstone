@@ -9,7 +9,7 @@ from ignore import myToken,channel_id,user_id, ngrok_url
 app = FastAPI()
 client = WebClient(token=myToken)
 input_message=""
-
+aaa=[]
 
 def post_message(text):
     response = client.chat_postMessage(
