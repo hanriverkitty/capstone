@@ -5,6 +5,10 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 import requests
 import json
 from ignore import myToken,channel_id,user_id, ngrok_url
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+
 
 app = FastAPI()
 client = WebClient(token=myToken)
@@ -34,7 +38,19 @@ async def post_msg(request:Request):
             global input_message
             input_message = data['event']['text'][text_index:]
             print('\n'+input_message)
-            client.chat_postMessage(channel=channel_id, text="https://www.youtube.com/results?search_query="+input_message)
+            #client.chat_postMessage(channel=channel_id, text="https://www.youtube.com/results?search_query="+input_message)
+            search_url = "https://www.youtube.com/results?search_query="+input_message
+            client.chat_postMessage(channel=channel_id,text=search_url)
+            get_url = requests.get(search_url)
+            soup = BeautifulSoup(get_url.text,"html.parser")
+            videos = soup.find_all("div", class_="yt-lockup-video")
+
+            for video in videos:
+                title = video.find("a", class_="yt-uix-tile-link")["title"]
+                link = "https://www.youtube.com" + video.find("a", class_="yt-uix-tile-link")["href"]
+                print("Title:", title)
+                print("Link:", link)
+
         return #RedirectResponse(ngrok_url+input_message)
     
     return 'OK'
