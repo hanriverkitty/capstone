@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, status
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -7,6 +7,7 @@ import json
 from ignore import myToken,channel_id,user_id, ngrok_url
 import subprocess
 import time
+import asyncio
 
 app = FastAPI()
 client = WebClient(token=myToken)
@@ -25,12 +26,12 @@ def post_message(text):
 async def post_msg(request:Request):
     data = await request.json()
     print(data)
-    event_handler_running = False
     if 'challenge' in data:
-        print(data['challenge'])
-        return data['challenge']
+        print(data['challenge']+"\n\n\n\n")
+        return Response(status_code=200,content="HTTP 200 OK")
+
    #slack 봇이 언급되었는지 여부
-    if data['event']['type'] == 'app_mention':
+    if data['event']['type'] == 'app_mention' and data['event']['user']=='U04UQCS77J8':
         print(data['event']['user'])
         print(data['event']['text'])
         print(data)
@@ -38,17 +39,19 @@ async def post_msg(request:Request):
             text_index = data['event']['text'].find('>') + 2
             input_message = data['event']['text'][text_index:]
             print('\n'+input_message)
-            while event_handler_running:
-                time.sleep(1)
-            event_handler_running = True
+            # while event_handler_running:
+            #     time.sleep(1)
+            # event_handler_running = True
             #client.chat_postMessage(channel=channel_id, text="https://www.youtube.com/results?search_query="+input_message)
             # search_url = "https://www.youtube.com/results?search_query="+input_message
             client.chat_postMessage(channel=channel_id,text=input_message)
-            event_handler_running = False
+            # event_handler_running = False
             #subprocess.call("YoutubeComment.py",shell=True)
-        return "HTTP 200 OK"
+            asyncio.create_task(run_youtube_comment())
+        return Response(status_code=200,content="HTTP 200 OK")
+    
     #RedirectResponse(ngrok_url+input_message)
-    return "HTTP 200 OK"
+    return Response(status_code=200,content="HTTP 200 OK")
     event = data["event"]
     if event["type"] == "message":
         text = event["text"]
@@ -63,6 +66,8 @@ async def post_msg(request:Request):
     return {"ok": True}
 
 
+async def run_youtube_comment():
+    subprocess.call("YoutubeComment.py", shell=True)
 
 
 @app.get("/name")
