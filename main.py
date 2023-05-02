@@ -5,16 +5,12 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 import requests
 import json
 from ignore import myToken,channel_id,user_id, ngrok_url
-from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
 import subprocess
-
+import time
 
 app = FastAPI()
 client = WebClient(token=myToken)
-input_message=""
-aaa=[]
+
 
 #slack에 메시지 보내기
 def post_message(text):
@@ -28,10 +24,11 @@ def post_message(text):
 @app.post("/input/")
 async def post_msg(request:Request):
     data = await request.json()
+    print(data)
+    event_handler_running = False
     if 'challenge' in data:
         print(data['challenge'])
         return data['challenge']
-   
    #slack 봇이 언급되었는지 여부
     if data['event']['type'] == 'app_mention':
         print(data['event']['user'])
@@ -39,19 +36,19 @@ async def post_msg(request:Request):
         print(data)
         if data['event']['text']:
             text_index = data['event']['text'].find('>') + 2
-            global input_message
             input_message = data['event']['text'][text_index:]
             print('\n'+input_message)
+            while event_handler_running:
+                time.sleep(1)
+            event_handler_running = True
             #client.chat_postMessage(channel=channel_id, text="https://www.youtube.com/results?search_query="+input_message)
             # search_url = "https://www.youtube.com/results?search_query="+input_message
             client.chat_postMessage(channel=channel_id,text=input_message)
-            subprocess.call("YoutubeComment.py",shell=True)
-
-            
-
-        return #RedirectResponse(ngrok_url+input_message)
-    
-    return 'OK'
+            event_handler_running = False
+            #subprocess.call("YoutubeComment.py",shell=True)
+        return "HTTP 200 OK"
+    #RedirectResponse(ngrok_url+input_message)
+    return "HTTP 200 OK"
     event = data["event"]
     if event["type"] == "message":
         text = event["text"]
@@ -65,17 +62,11 @@ async def post_msg(request:Request):
             print("Error sending message: {}".format(e))
     return {"ok": True}
 
-@app.get("/")
-def root():
-    return post_message("안녕하세요.")
 
 
-@app.get("/hello/{name}")
-def say_hello(name: str):
-    return {"message": f"Hello {name}"}
 
-@app.get("/{name}/name")
-async def say_hello(name: str):
+@app.get("/name")
+async def say_hello():
     # post_message(myToken,"#프로젝트","안녕하세요.")
 
     return get_message_ts()
