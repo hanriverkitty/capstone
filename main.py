@@ -8,6 +8,7 @@ from ignore import myToken,channel_id,user_id, ngrok_url
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+import subprocess
 
 
 app = FastAPI()
@@ -15,6 +16,7 @@ client = WebClient(token=myToken)
 input_message=""
 aaa=[]
 
+#slack에 메시지 보내기
 def post_message(text):
     response = client.chat_postMessage(
         channel=channel_id,
@@ -22,6 +24,7 @@ def post_message(text):
     )
     return response
 
+#slack에서 보낸 메시지를 읽음
 @app.post("/input/")
 async def post_msg(request:Request):
     data = await request.json()
@@ -29,6 +32,7 @@ async def post_msg(request:Request):
         print(data['challenge'])
         return data['challenge']
    
+   #slack 봇이 언급되었는지 여부
     if data['event']['type'] == 'app_mention':
         print(data['event']['user'])
         print(data['event']['text'])
@@ -39,17 +43,11 @@ async def post_msg(request:Request):
             input_message = data['event']['text'][text_index:]
             print('\n'+input_message)
             #client.chat_postMessage(channel=channel_id, text="https://www.youtube.com/results?search_query="+input_message)
-            search_url = "https://www.youtube.com/results?search_query="+input_message
-            client.chat_postMessage(channel=channel_id,text=search_url)
-            get_url = requests.get(search_url)
-            soup = BeautifulSoup(get_url.text,"html.parser")
-            videos = soup.find_all("div", class_="yt-lockup-video")
+            # search_url = "https://www.youtube.com/results?search_query="+input_message
+            client.chat_postMessage(channel=channel_id,text=input_message)
+            subprocess.call("YoutubeComment.py",shell=True)
 
-            for video in videos:
-                title = video.find("a", class_="yt-uix-tile-link")["title"]
-                link = "https://www.youtube.com" + video.find("a", class_="yt-uix-tile-link")["href"]
-                print("Title:", title)
-                print("Link:", link)
+            
 
         return #RedirectResponse(ngrok_url+input_message)
     

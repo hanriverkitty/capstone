@@ -1,16 +1,16 @@
 import pandas as pd
-import schedule
+# import schedule
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from openpyxl import Workbook
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from tqdm import tqdm
+# from tqdm import tqdm
 import time
 import re
-from langdetect import detect
-from langdetect.lang_detect_exception import LangDetectException
+# from langdetect import detect
+# from langdetect.lang_detect_exception import LangDetectException
 
 
 # 셀레니움 옵션 설정
@@ -47,7 +47,8 @@ time.sleep(2)
 datebutton = driver.find_element(By.CSS_SELECTOR,'#icon-label')
 datebutton.click()
 time.sleep(5)
-Recentlybutton =  driver.find_element(By.CSS_SELECTOR,'#menu > a:nth-child(2) > tp-yt-paper-item > tp-yt-paper-item-body > div.item.style-scope.yt-dropdown-menu')
+Recentlybutton =  driver.find_element(By.CSS_SELECTOR,'#menu > a:nth-child(2) > tp-yt-paper-item > tp-yt-paper-item-body > div#item-with-badge')
+# Recentlybutton =  driver.find_element(By.CSS_SELECTOR,'#item-with-badge')
 Recentlybutton.click()
 time.sleep(5)
 

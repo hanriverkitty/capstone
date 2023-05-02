@@ -2,13 +2,16 @@ import pandas as pd
 import boto3
 import os
 from iso639 import to_name, NonExistentLanguageError
-
+from ignore import Access_key,Secret_access_key
 
 # boto3 session 생성
-session = boto3.Session(profile_name='my_named_profile')
+session = boto3.Session(
+    region_name='ap-northeast-2',
+    aws_access_key_id=Access_key,
+    aws_secret_access_key=Secret_access_key)
 comprehend = boto3.client('comprehend', region_name='ap-northeast-2')
 translate = boto3.client('translate', region_name='ap-northeast-2')
-
+print(Access_key+"\n"+Secret_access_key)
 # xlsx 파일 읽기
 df = pd.read_excel('test1.xlsx')
 
@@ -16,7 +19,7 @@ df = pd.read_excel('test1.xlsx')
 df = df.T
 
 # 3행 데이터 추출
-data = df.iloc[2, :].apply(lambda x: str(x).strip())
+data = df.iloc[2].apply(lambda x: str(x).strip())
 
 # 결과 저장을 위한 빈 리스트 생성
 result_list = []
@@ -60,7 +63,7 @@ for segment in data:
 
 # 결과를    데이터프레임으로 변환하여 xlsx 파일로 저장
 result_df = pd.DataFrame(result_list)
-result_dir = os.path.join(os.path.expanduser("~/Desktop"), "comprehend_results")
+result_dir = os.path.join(os.path.expanduser("./"), "comprehend_results")
 os.makedirs(result_dir, exist_ok=True)
 result_path = os.path.join(result_dir, "result_.xlsx")
 
