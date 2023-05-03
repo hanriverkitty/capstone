@@ -28,7 +28,7 @@ async def post_msg(request:Request):
     print(data)
     if 'challenge' in data:
         print(data['challenge']+"\n\n\n\n")
-        return Response(status_code=200,content="HTTP 200 OK")
+        return data['challenge']
 
    #slack 봇이 언급되었는지 여부
     if data['event']['type'] == 'app_mention' and data['event']['user']=='U04UQCS77J8':
@@ -44,7 +44,7 @@ async def post_msg(request:Request):
             # event_handler_running = True
             #client.chat_postMessage(channel=channel_id, text="https://www.youtube.com/results?search_query="+input_message)
             # search_url = "https://www.youtube.com/results?search_query="+input_message
-            client.chat_postMessage(channel=channel_id,text=input_message)
+            client.chat_postMessage(channel=channel_id,text=input_message+" 그룹의 댓글 감정분석을 시작하겠습니다")
             # event_handler_running = False
             #subprocess.call("YoutubeComment.py",shell=True)
             asyncio.create_task(run_youtube_comment())
@@ -69,6 +69,8 @@ async def post_msg(request:Request):
 async def run_youtube_comment():
     subprocess.call("YoutubeComment.py", shell=True)
     subprocess.call("comprehend.py", shell=True)
+    client.chat_postMessage(channel=channel_id,text="감정분석의 결과가 만들어졌습니다")
+    return
 
 @app.get("/name")
 async def say_hello():

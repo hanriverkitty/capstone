@@ -19,6 +19,7 @@ df = pd.read_excel('test1.xlsx')
 # df = df.T
 
 # 3행 데이터 추출
+# 프리티어로 인해 10개만 추출
 data = df.iloc[1:10,2].apply(lambda x: str(x).strip())
 print(data)
 # 결과 저장을 위한 빈 리스트 생성

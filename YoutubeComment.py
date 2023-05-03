@@ -34,28 +34,29 @@ driver.get("https://www.youtube.com/watch?v=11cta61wi0g")
 # 스크롤 내리기
 
 body = driver.find_element(By.TAG_NAME,'body')
-time.sleep(5)
+time.sleep(1)
 
 last_height = driver.execute_script("return document.documentElement.scrollHeight")
 
 driver.find_element(By.TAG_NAME,'html').send_keys(Keys.PAGE_DOWN)
-time.sleep(5)
+time.sleep(1)
 
 comment_raw = driver.find_elements(By.CSS_SELECTOR,"#count > yt-formatted-string > span:nth-child(2)")
-time.sleep(2)
+time.sleep(1)
 
 datebutton = driver.find_element(By.CSS_SELECTOR,'#icon-label')
 datebutton.click()
-time.sleep(5)
+time.sleep(1)
 Recentlybutton =  driver.find_element(By.CSS_SELECTOR,'#menu > a:nth-child(2) > tp-yt-paper-item > tp-yt-paper-item-body > div#item-with-badge')
 # Recentlybutton =  driver.find_element(By.CSS_SELECTOR,'#item-with-badge')
 Recentlybutton.click()
-time.sleep(5)
+time.sleep(1)
 
-
-while True:
+i=0
+while i<10:
+    i+=1
     driver.execute_script("window.scrollTo(0, document.documentElement.scrollHeight);")
-    time.sleep(1.5)
+    time.sleep(1)
 
     new_height = driver.execute_script("return document.documentElement.scrollHeight")
     if new_height == last_height:
