@@ -68,7 +68,7 @@ async def post_msg(request:Request):
 
 async def run_youtube_comment():
     subprocess.call("YoutubeComment.py", shell=True)
-
+    subprocess.call("comprehend.py", shell=True)
 
 @app.get("/name")
 async def say_hello():
