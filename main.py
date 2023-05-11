@@ -8,6 +8,8 @@ from ignore import myToken,channel_id,user_id, ngrok_url
 import subprocess
 import time
 import asyncio
+import os
+os.environ["OPENAI_API_KEY"] = "..."
 
 app = FastAPI()
 client = WebClient(token=myToken)
