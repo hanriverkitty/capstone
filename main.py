@@ -1,16 +1,21 @@
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, status
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from fastapi.responses import HTMLResponse, RedirectResponse
 import requests
 import json
 from ignore import myToken,channel_id,user_id, ngrok_url
+import subprocess
+import time
+import asyncio
+import os
+os.environ["OPENAI_API_KEY"] = "..."
 
 app = FastAPI()
 client = WebClient(token=myToken)
-input_message=""
-aaa=[]
 
+
+#slack에 메시지 보내기
 def post_message(text):
     response = client.chat_postMessage(
         channel=channel_id,
@@ -18,26 +23,37 @@ def post_message(text):
     )
     return response
 
+#slack에서 보낸 메시지를 읽음
 @app.post("/input/")
 async def post_msg(request:Request):
     data = await request.json()
+    print(data)
     if 'challenge' in data:
-        print(data['challenge'])
+        print(data['challenge']+"\n\n\n\n")
         return data['challenge']
-   
-    if data['event']['type'] == 'app_mention':
+
+   #slack 봇이 언급되었는지 여부
+    if data['event']['type'] == 'app_mention' and data['event']['user']=='U04UQCS77J8':
         print(data['event']['user'])
         print(data['event']['text'])
         print(data)
         if data['event']['text']:
             text_index = data['event']['text'].find('>') + 2
-            global input_message
             input_message = data['event']['text'][text_index:]
             print('\n'+input_message)
-            client.chat_postMessage(channel=channel_id, text="https://www.youtube.com/results?search_query="+input_message)
-        return #RedirectResponse(ngrok_url+input_message)
+            # while event_handler_running:
+            #     time.sleep(1)
+            # event_handler_running = True
+            #client.chat_postMessage(channel=channel_id, text="https://www.youtube.com/results?search_query="+input_message)
+            # search_url = "https://www.youtube.com/results?search_query="+input_message
+            client.chat_postMessage(channel=channel_id,text=input_message+" 그룹의 댓글 감정분석을 시작하겠습니다")
+            # event_handler_running = False
+            #subprocess.call("YoutubeComment.py",shell=True)
+            asyncio.create_task(run_youtube_comment())
+        return Response(status_code=200,content="HTTP 200 OK")
     
-    return 'OK'
+    #RedirectResponse(ngrok_url+input_message)
+    return Response(status_code=200,content="HTTP 200 OK")
     event = data["event"]
     if event["type"] == "message":
         text = event["text"]
@@ -51,17 +67,15 @@ async def post_msg(request:Request):
             print("Error sending message: {}".format(e))
     return {"ok": True}
 
-@app.get("/")
-def root():
-    return post_message("안녕하세요.")
 
+async def run_youtube_comment():
+    subprocess.call("YoutubeComment.py", shell=True)
+    subprocess.call("comprehend.py", shell=True)
+    client.chat_postMessage(channel=channel_id,text="감정분석의 결과가 만들어졌습니다")
+    return
 
-@app.get("/hello/{name}")
-def say_hello(name: str):
-    return {"message": f"Hello {name}"}
-
-@app.get("/{name}/name")
-async def say_hello(name: str):
+@app.get("/name")
+async def say_hello():
     # post_message(myToken,"#프로젝트","안녕하세요.")
 
     return get_message_ts()
