@@ -2,26 +2,67 @@ import pandas as pd
 import boto3
 import os
 from iso639 import to_name, NonExistentLanguageError
-from ignore import Access_key,Secret_access_key
+import pymysql
+
+# AWS 계정 정보 입력
+access_key = "accesskey"
+secret_key = "secretkey"
+region_name = "region"
+
+# MySQL 계정 정보 입력
+mysql_host = "localhost"
+mysql_port = 3306
+mysql_user = "user"
+mysql_password = "password"
+mysql_dbname = "dbname"
 
 # boto3 session 생성
 session = boto3.Session(
-    region_name='ap-northeast-2',
-    aws_access_key_id=Access_key,
-    aws_secret_access_key=Secret_access_key)
-comprehend = session.client('comprehend')
-translate = session.client('translate')
-print(Access_key+"\n"+Secret_access_key)
+    aws_access_key_id=access_key,
+    aws_secret_access_key=secret_key,
+    region_name=region_name,
+)
+
+comprehend = session.client("comprehend")
+translate = session.client("translate")
+
 # xlsx 파일 읽기
-df = pd.read_excel('test1.xlsx')
+df = pd.read_excel("test1.xlsx")
 
 # 전치
 # df = df.T
-
 # 3행 데이터 추출
-# 프리티어로 인해 10개만 추출
-data = df.iloc[1:10,2].apply(lambda x: str(x).strip())
-print(data)
+data = df.iloc[:, 2].apply(lambda x: str(x).strip())
+
+# MySQL 연결
+conn = pymysql.connect(
+    host=mysql_host,
+    port=mysql_port,
+    user=mysql_user,
+    password=mysql_password,
+    db=mysql_dbname,
+    charset="utf8mb4",
+)
+cursor = conn.cursor()
+print("sql connected")
+# 테이블 생성 쿼리
+create_table_query = """
+CREATE TABLE IF NOT EXISTS results (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  기존_댓글 TEXT,
+  번역_댓글 TEXT,
+  언어_코드 VARCHAR(10),
+  언어_이름 VARCHAR(100),
+  감정분석 VARCHAR(10),
+  긍정 FLOAT(4),
+  부정 FLOAT(4),
+  중립 FLOAT(4),
+  혼합 FLOAT(4)
+)
+"""
+print("table create")
+cursor.execute(create_table_query)
+
 # 결과 저장을 위한 빈 리스트 생성
 result_list = []
 
@@ -32,51 +73,84 @@ for segment in data:
     try:
         # 번역 전 언어 감지
         source_lang_response = comprehend.detect_dominant_language(Text=str(segment))
-        source_lang_code = source_lang_response['Languages'][0]['LanguageCode']
-        target_lang_code = 'en'
+        source_lang_code = source_lang_response["Languages"][0]["LanguageCode"]
+        target_lang_code = "ko"
         language_name = to_name(source_lang_code)
-        if source_lang_code == 'ug':
-            # 해당 언어가 지원되지 않으므로 무시
+        if source_lang_code == "ug":
             continue
     except NonExistentLanguageError:
-        language_name = source_lang_code
-    translated_text_response = translate.translate_text(Text=str(segment),
-                                                         SourceLanguageCode=source_lang_code,
-                                                         TargetLanguageCode=target_lang_code)
-    translated_text = translated_text_response['TranslatedText']
+        # 해당 언어가 지원되지 않으므로 무시하고 다음 데이터 처리
+        continue
+
+    translated_text_response = translate.translate_text(
+        Text=str(segment),
+        SourceLanguageCode=source_lang_code,
+        TargetLanguageCode=target_lang_code,
+    )
+    translated_text = translated_text_response["TranslatedText"]
 
     # 감정 분석
-    sentiment_response = comprehend.detect_sentiment(Text=translated_text_response['TranslatedText'], LanguageCode='en')
+    sentiment_response = comprehend.detect_sentiment(
+        Text=translated_text_response["TranslatedText"], LanguageCode="ko"
+    )
 
-    sentiment = sentiment_response['Sentiment']
-    positive = round(sentiment_response['SentimentScore']['Positive'] * 100, 2)
-    negative = round(sentiment_response['SentimentScore']['Negative'] * 100, 2)
-    neutral = round(sentiment_response['SentimentScore']['Neutral'] * 100, 2)
-    mixed = round(sentiment_response['SentimentScore']['Mixed'] * 100, 2)
-    print(segment,translated_text,source_lang_code,language_name)
+    sentiment = sentiment_response["Sentiment"]
+    positive = round(sentiment_response["SentimentScore"]["Positive"] * 100, 2)
+    negative = round(sentiment_response["SentimentScore"]["Negative"] * 100, 2)
+    neutral = round(sentiment_response["SentimentScore"]["Neutral"] * 100, 2)
+    mixed = round(sentiment_response["SentimentScore"]["Mixed"] * 100, 2)
+
     # 결과를 리스트에 저장
-    result_list.append({'Input Text': segment,
-                        'Translated Text': translated_text,
-                        'Detected Source Language': source_lang_code,
-                        'Detected Source Language Name': language_name,
-                        'Sentiment': sentiment,
-                        'Positive': positive,
-                        'Negative': negative,
-                        'Neutral': neutral,
-                        'Mixed': mixed})
+    result_list.append(
+        {
+            "기존_댓글": segment,
+            "번역_댓글": translated_text,
+            "언어_코드": source_lang_code,
+            "언어_이름": language_name,
+            "감정분석": sentiment,
+            "긍정": positive,
+            "부정": negative,
+            "중립": neutral,
+            "혼합": mixed,
+        }
+    )
 
-# 결과를    데이터프레임으로 변환하여 xlsx 파일로 저장
-result_df = pd.DataFrame(result_list)
-# result_dir = os.path.join(os.path.expanduser("./"), "comprehend_results")
-# os.makedirs(result_dir, exist_ok=True)
-result_path = os.path.join("./", "result_.xlsx")
+    # 결과를 MySQL DB에 저장
+    query = f'INSERT INTO results (기존_댓글, 번역_댓글, 언어_코드, 언어_이름, 감정분석, 긍정, 부정, 중립, 혼합) VALUES ("{segment}", "{translated_text}", "{source_lang_code}", "{language_name}", "{sentiment}", "{positive}", "{negative}", "{neutral}", "{mixed}")'
 
-if os.path.exists(result_path):
-    # 파일이 이미 존재하면 파일명에 숫자를 붙여서 중복을 피한다.
-    i = 1
-    while os.path.exists(result_path):
-        result_path = os.path.join("./", "result_" + str(i) + ".xlsx")
-        i += 1
-result_df.to_excel(result_path, index=False)
-print("Results saved at", result_path)
+    try:
+        cursor.execute(query)
+        conn.commit()
+    except Exception as e:
+        print(e)
+        conn.rollback()
+
+    # MySQL DB의 결과 추출
+    select_query = "SELECT * FROM results"
+    cursor.execute(select_query)
+    result = cursor.fetchall()
+
+    # 추출한 결과를 DataFrame으로 변환
+    df = pd.DataFrame(
+        list(result),
+        columns=[
+            "id",
+            "기존_댓글",
+            "번역_댓글",
+            "언어_코드",
+            "언어_이름",
+            "감정분석",
+            "긍정",
+            "부정",
+            "중립",
+            "혼합",
+        ],
+    )
+
+    # csv 파일로 저장
+    df.to_csv("result1.csv", index=False)
+
+# MySQL 연결 종료
+cursor.close()
+conn.close()
 print("over")
