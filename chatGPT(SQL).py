@@ -7,17 +7,33 @@ from langchain.chains import SQLDatabaseSequentialChain
 from langchain import SQLDatabaseChain
 from langchain.chains import SQLDatabaseSequentialChain
 from sqlalchemy import create_engine
+import pymysql
+import os
+from ignore import OPENAI_API_KEY, sql_URL
 
-engine = create_engine(
-    "mysql+pymysql://[id]:[pw]@[mysql주소]:[port]/[db_name]?charset=utf8",
-    encoding="utf-8",
-)
-conn = engine.connect()
+os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+
+# connection = pymysql.connect(
+#     host="",
+#     port=,
+#     user="",
+#     password="",
+#     database="",
+#     charset="utf8",
+# )
+
+# engine = create_engine(
+#     "sql_URL"
+# )
+# conn = engine.connect()
 
 
-db = SQLDatabase.from_uri("sqlite:///../../../../notebooks/Chinook.db")
+db = SQLDatabase.from_uri(sql_URL)
 llm = OpenAI(temperature=0)
 db_chain = SQLDatabaseChain.from_llm(llm, db, verbose=True)
-chain = SQLDatabaseSequentialChain.from_llm(llm, db, verbose=True)
-
-db_chain.run("How many employees are there?")
+command = ""
+while True:
+    command = input()
+    if command == "종료":
+        break
+    db_chain.run(command)
