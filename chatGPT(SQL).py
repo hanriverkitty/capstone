@@ -36,4 +36,5 @@ while True:
     command = input()
     if command == "종료":
         break
-    db_chain.run(command)
+    a = db_chain.run(command)
+    print(a)
