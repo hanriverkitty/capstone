@@ -9,6 +9,7 @@ from selenium.webdriver.common.keys import Keys
 from tqdm import tqdm
 import time
 import re
+import datetime , timedelta
 from langdetect import detect
 from langdetect.lang_detect_exception import LangDetectException
 
@@ -29,39 +30,53 @@ ws = wb.create_sheet()
 
 
 data_list = []
-driver.get("https://www.youtube.com/watch?v=11cta61wi0g")
+driver.get("https://www.youtube.com/watch?v=S7dYlvFa3QQ")
 
 # 스크롤 내리기
 
 body = driver.find_element(By.TAG_NAME,'body')
-time.sleep(5)
+time.sleep(1)
 
 last_height = driver.execute_script("return document.documentElement.scrollHeight")
 
+Title =driver.find_element(By.CSS_SELECTOR,"#title > h1 > yt-formatted-string") 
+time.sleep(0.5)
+
+uploadDatebutton = driver.find_element(By.CSS_SELECTOR,'#bottom-row')
+uploadDatebutton.click()
+time.sleep(1)
+
+uploadDate =driver.find_element(By.CSS_SELECTOR,"#info > span:nth-child(3)") 
+time.sleep(0.5)
+
 driver.find_element(By.TAG_NAME,'html').send_keys(Keys.PAGE_DOWN)
-time.sleep(5)
+time.sleep(1)
+
+driver.find_element(By.TAG_NAME,'html').send_keys(Keys.PAGE_DOWN)
+time.sleep(1)
 
 comment_raw = driver.find_elements(By.CSS_SELECTOR,"#count > yt-formatted-string > span:nth-child(2)")
 time.sleep(2)
 
 datebutton = driver.find_element(By.CSS_SELECTOR,'#icon-label')
 datebutton.click()
-time.sleep(5)
-Recentlybutton =  driver.find_element(By.CSS_SELECTOR,'#menu > a:nth-child(2) > tp-yt-paper-item > tp-yt-paper-item-body > div.item.style-scope.yt-dropdown-menu')
+time.sleep(1)
+
+Recentlybutton =  driver.find_element(By.CSS_SELECTOR,'#menu > a:nth-child(2)')
 Recentlybutton.click()
-time.sleep(5)
+time.sleep(1)
 
 
 while True:
     driver.execute_script("window.scrollTo(0, document.documentElement.scrollHeight);")
-    time.sleep(1.5)
+    time.sleep(0.5)
 
     new_height = driver.execute_script("return document.documentElement.scrollHeight")
     if new_height == last_height:
         break
     last_height = new_height
 
-time.sleep(1.5)
+time.sleep(0.5)
 
 try:
     driver.find_element(By.CSS_SELECTOR,'#dismiss-button > a').click()
@@ -104,14 +119,30 @@ for i in range(len(comment_list)):
         temp_comment = temp_comment.replace('    ', '')
         comment_final.append(temp_comment) # 댓글 내용
 
-        temp_date = date_list[i].text
-        temp_date = temp_date.replace('\n', '')
-        temp_date = temp_date.replace('\t', '')
-        temp_date = temp_date.replace('    ', '')
-        #temp_date = datetime.strptime(temp_date, '%Y-%m-%d').date()
+        recentlyDate = date_list[i].text
+        if recentlyDate.find("일") >= 0:
+            date_num = int(re.sub(r'[^0-9]', '', recentlyDate)) 
+            recentlyDate = datetime.datetime.now() - datetime.timedelta(days = date_num)
+        if recentlyDate.find("주") >= 0:
+            date_num = int(re.sub(r'[^0-9]', '', recentlyDate)) * 7
+            recentlyDate = datetime.datetime.now() - datetime.timedelta(days = date_num)
+        if recentlyDate.find("개월") >= 0:
+            date_num = int(re.sub(r'[^0-9]', '', recentlyDate)) * 30
+            recentlyDate = datetime.datetime.now() - datetime.timedelta(days = date_num)
+        if recentlyDate.find("년") >= 0:
+            date_num = int(re.sub(r'[^0-9]', '', recentlyDate)) * 365
+            recentlyDate = datetime.datetime.now() - datetime.timedelta(days = date_num)
+        temp_date = recentlyDate.strftime("%Y-%m-%d")
+        #temp_date = temp_date.replace('\n', '')
+        #temp_date = temp_date.replace('\t', '')
+        #temp_date = temp_date.replace('    ', '')
         date_final.append(temp_date)
 
+uploadDate = uploadDate.text
+Title = Title.text
 
-pd_data = {"id" : id_final , "texts" : comment_final,  "date" : date_final}
+
+pd_data = {"id" : id_final , "texts" : comment_final,  "date" : date_final, "uploadDate" : uploadDate, "Title" : Title }
 youtube_pd = pd.DataFrame(pd_data)
-youtube_pd.to_excel('test1.xlsx')
+youtube_pd.add
+youtube_pd.to_excel('testdate.xlsx')
