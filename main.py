@@ -1,10 +1,12 @@
 from fastapi import FastAPI, Request, Response, status
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
-from fastapi.responses import HTMLResponse, RedirectResponse
 from langchain.sql_database import SQLDatabase
 from langchain.llms.openai import OpenAI
 from langchain import SQLDatabaseChain
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 import requests
 import json
@@ -17,9 +19,17 @@ import os
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+
 client = WebClient(token=myToken)
 is_run = False
 database_connected = False
+
+
+@app.get("/html", response_class=HTMLResponse)
+async def show_html(request: Request):
+    return templates.TemplateResponse("js_test.html", {"request": request})
 
 
 # slack에 메시지 보내기
