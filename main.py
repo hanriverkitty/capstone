@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Response, status
+from fastapi import FastAPI, Request, Response
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from langchain.sql_database import SQLDatabase
@@ -7,12 +7,10 @@ from langchain import SQLDatabaseChain
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-
-import requests
-import json
+from langchain.chains.conversation.memory import ConversationBufferMemory
+from langchain import OpenAI, ConversationChain
 from ignore import myToken, channel_id, user_id, ngrok_url, OPENAI_API_KEY, sql_URL
 import subprocess
-import time
 import asyncio
 import os
 
@@ -77,6 +75,8 @@ async def post_msg(request: Request):
                     print("아이브")
                     is_run = True
                     asyncio.create_task(start_gpt())
+                    return Response(status_code=200, content="HTTP 200 OK")
+
             return Response(status_code=200, content="HTTP 200 OK")
         elif is_run == True:
             if data["event"]["text"]:
@@ -115,24 +115,47 @@ async def post_msg(request: Request):
 
 
 async def communication_gpt(input_message):
-    global db_chain, is_run
+    global db_chain, is_run, conversation
+    input_message = input_message.lstrip()
+
     print("communication_gpt")
     if input_message == "종료":
         is_run = False
         client.chat_postMessage(channel=channel_id, text="대화를 종료합니다")
         return
-    answer = db_chain.run(input_message)
-    client.chat_postMessage(channel=channel_id, text=answer)
+    if input_message[0] == "1":
+        input_message = input_message[1:].lstrip()
+        answer = db_chain.run(input_message)
+        client.chat_postMessage(channel=channel_id, text=answer)
+    elif input_message[0] == "2":
+        input_message = input_message[1:].lstrip()
+        answer = conversation.predict(input=input_message)
+        client.chat_postMessage(channel=channel_id, text=answer)
+    else:
+        client.chat_postMessage(channel=channel_id, text="번호를 붙여주세요")
+
     return
 
 
 async def start_gpt():
-    global is_run, database_connected, db, db_chain, llm
+    global is_run, database_connected, db, db_chain, llm, conversation
     is_run = True
     db = SQLDatabase.from_uri(sql_URL)
     llm = OpenAI(temperature=0)
     db_chain = SQLDatabaseChain.from_llm(llm, db, verbose=True)
-    client.chat_postMessage(channel=channel_id, text="질문을 하면 제가 분석해서 알려드리겠습니다")
+
+    memory = ConversationBufferMemory()
+
+    conversation = ConversationChain(
+        llm=OpenAI(temperature=0),
+        verbose=True,
+        memory=memory,
+    )
+
+    client.chat_postMessage(
+        channel=channel_id,
+        text='두 가지 유형으로 질문이 가능합니다.\n1. 유튜브 댓글기반 검색\n2. GPT를 통한 검색\n원하시는 질문 앞에 번호를 붙여주세요.\n종료를 원하시면 "종료"를 입력해주세요.',
+    )
 
 
 async def run_youtube_comment():
