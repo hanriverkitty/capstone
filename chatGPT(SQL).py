@@ -5,11 +5,12 @@ from langchain.llms.openai import OpenAI
 from langchain.agents import AgentExecutor
 from langchain.chains import SQLDatabaseSequentialChain
 from langchain import SQLDatabaseChain
-from langchain.chains import SQLDatabaseSequentialChain
 from sqlalchemy import create_engine
 import pymysql
 import os
 from ignore import OPENAI_API_KEY, sql_URL
+from langchain.chains.conversation.memory import ConversationBufferMemory
+
 
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
 
@@ -27,10 +28,11 @@ os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
 # )
 # conn = engine.connect()
 
+memory = ConversationBufferMemory()
 
 db = SQLDatabase.from_uri(sql_URL)
 llm = OpenAI(temperature=0)
-db_chain = SQLDatabaseChain.from_llm(llm, db, verbose=True)
+db_chain = SQLDatabaseSequentialChain.from_llm(llm, db, verbose=True, memory=memory)
 command = ""
 while True:
     command = input()
