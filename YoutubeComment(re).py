@@ -28,9 +28,9 @@ ws = wb.create_sheet()
 
 
 data_list = []
-driver.get("https://www.youtube.com/watch?v=js1CtxSY38I")
+driver.get("https://www.youtube.com/watch?v=pG6iaOMV46I")
 
-URL = "https://www.youtube.com/watch?v=js1CtxSY38I"
+URL = "https://www.youtube.com/watch?v=pG6iaOMV46I"
 
 # 스크롤 내리기
 
@@ -40,6 +40,10 @@ time.sleep(1)
 last_height = driver.execute_script("return document.documentElement.scrollHeight")
 
 Title = driver.find_element(By.CSS_SELECTOR, "#title > h1 > yt-formatted-string")
+b = Title.text
+a = b.find("'")
+singer = b[:a]
+sing = b[a:]
 time.sleep(0.5)
 
 uploadDatebutton = driver.find_element(By.CSS_SELECTOR, "#bottom-row")
@@ -68,8 +72,9 @@ Recentlybutton = driver.find_element(By.CSS_SELECTOR, "#menu > a:nth-child(2)")
 Recentlybutton.click()
 time.sleep(1)
 
-
-while True:
+k = 0
+while k < 100:
+    k += 1
     driver.execute_script("window.scrollTo(0, document.documentElement.scrollHeight);")
     time.sleep(0.5)
 
@@ -155,6 +160,8 @@ pd_data = {
     "uploadDate": uploadDate,
     "Title": Title,
     "URL": URL,
+    "singer": singer,
+    "sing": sing,
 }
 youtube_pd = pd.DataFrame(pd_data)
 youtube_pd.add

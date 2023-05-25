@@ -13,9 +13,39 @@ from ignore import myToken, channel_id, user_id, ngrok_url, OPENAI_API_KEY, sql_
 import subprocess
 import asyncio
 import os
+from langchain.prompts.prompt import PromptTemplate
+
+
+database_template = """Given an input question, first create a syntactically correct {dialect} query to run, then look at the results of the query and return the answer.
+Use the following format:
+
+Question: "Question here"
+SQLQuery: "SQL Query to run"
+SQLResult: "Result of the SQLQuery"
+Answer: "Final answer here"
+
+Only use the following tables:
+
+{table_info}
+
+results 테이블의 열은 id, URL주소, 감정분석, 긍정, 기존_댓글, 댓글작성시간, 번역_댓글, 부정, 언어_이름, 언어_코드, 영상_이름, 중립, 혼합 이 있습니다
+영상_이름 열의 value에는 아이돌그룹의 이름과 노래가 있습니다. MV 앞에 작은 따옴표 안에 노래가 있습니다. 작은따옴표를 제외한 앞부분이 아이돌그룹의 이름입니다
+질문을 할때 아이돌그룹의 이름이 사용됩니다
+질문을 할때 노래들이 사용됩니다
+하나의 행에는 댓글 한개의 정보들이 들어있습니다
+댓글내용은 기존_댓글 열을 의미합니다
+번역댓글은 번역_댓글 열을 의미합니다
+언어는 언어_이름 열을 의미합니다
+모든 답변은 중복을 허락하지 않습니다
+결과값이 많을 경우 한줄씩 출력해줘
+
+Question: {input}
+"""
+PROMPT = PromptTemplate(
+    input_variables=["input", "table_info", "dialect"], template=database_template
+)
 
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
-
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
@@ -39,7 +69,7 @@ def post_message(text):
 # slack에서 보낸 메시지를 읽음
 @app.post("/input/")
 async def post_msg(request: Request):
-    global is_run, database_connected, db_chain
+    global is_run, database_connected, db_chain, group_name
     data = await request.json()
     # print(data)
     print(is_run)
@@ -72,6 +102,7 @@ async def post_msg(request: Request):
                 # subprocess.call("YoutubeComment.py",shell=True)
                 # asyncio.create_task(run_youtube_comment())
                 if input_message == "아이브":
+                    group_name = "아이브"
                     print("아이브")
                     is_run = True
                     asyncio.create_task(start_gpt())
@@ -142,7 +173,7 @@ async def start_gpt():
     is_run = True
     db = SQLDatabase.from_uri(sql_URL)
     llm = OpenAI(temperature=0)
-    db_chain = SQLDatabaseChain.from_llm(llm, db, verbose=True)
+    db_chain = SQLDatabaseChain.from_llm(llm, db, prompt=PROMPT, verbose=True)
 
     memory = ConversationBufferMemory()
 
