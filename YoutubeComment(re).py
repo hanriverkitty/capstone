@@ -28,9 +28,9 @@ ws = wb.create_sheet()
 
 
 data_list = []
-driver.get("https://www.youtube.com/watch?v=pG6iaOMV46I")
+driver.get("https://www.youtube.com/watch?v=--FmExEAsM8")
 
-URL = "https://www.youtube.com/watch?v=pG6iaOMV46I"
+URL = "https://www.youtube.com/watch?v=--FmExEAsM8"
 
 # 스크롤 내리기
 
@@ -73,7 +73,7 @@ Recentlybutton.click()
 time.sleep(1)
 
 k = 0
-while k < 100:
+while k < 50:
     k += 1
     driver.execute_script("window.scrollTo(0, document.documentElement.scrollHeight);")
     time.sleep(0.5)

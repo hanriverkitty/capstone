@@ -28,16 +28,16 @@ Only use the following tables:
 
 {table_info}
 
-results 테이블의 열은 id, URL주소, 감정분석, 긍정, 기존_댓글, 댓글작성시간, 번역_댓글, 부정, 언어_이름, 언어_코드, 영상_이름, 중립, 혼합 이 있습니다
-영상_이름 열의 value에는 아이돌그룹의 이름과 노래가 있습니다. MV 앞에 작은 따옴표 안에 노래가 있습니다. 작은따옴표를 제외한 앞부분이 아이돌그룹의 이름입니다
-질문을 할때 아이돌그룹의 이름이 사용됩니다
+results 테이블의 열은 id, URL주소, 감정분석, 긍정, 기존_댓글, 댓글작성시간, 번역_댓글, 부정, 언어_이름, 언어_코드, 가수, 노래, 중립, 혼합 , 영상이름이 있습니다
+감정분석의 결과로는 긍정,부정,혼합,중립이 있습니다
+가수는 아이돌그룹의 이름입니다
 질문을 할때 노래들이 사용됩니다
-하나의 행에는 댓글 한개의 정보들이 들어있습니다
+하나의 행은 한개의 댓글입니다
 댓글내용은 기존_댓글 열을 의미합니다
 번역댓글은 번역_댓글 열을 의미합니다
 언어는 언어_이름 열을 의미합니다
 모든 답변은 중복을 허락하지 않습니다
-결과값이 많을 경우 한줄씩 출력해줘
+결과값이 많을 경우 한줄씩 출력해주세요
 
 Question: {input}
 """
@@ -55,6 +55,7 @@ is_run = False
 database_connected = False
 
 
+# html 파일 연결
 @app.get("/html", response_class=HTMLResponse)
 async def show_html(request: Request):
     return templates.TemplateResponse("js_test.html", {"request": request})
@@ -101,9 +102,9 @@ async def post_msg(request: Request):
                 # event_handler_running = False
                 # subprocess.call("YoutubeComment.py",shell=True)
                 # asyncio.create_task(run_youtube_comment())
-                if input_message == "아이브":
-                    group_name = "아이브"
-                    print("아이브")
+                if input_message == "검색":
+                    group_name = "검색"
+                    print("검색")
                     is_run = True
                     asyncio.create_task(start_gpt())
                     return Response(status_code=200, content="HTTP 200 OK")
