@@ -28,9 +28,9 @@ ws = wb.create_sheet()
 
 
 data_list = []
-driver.get("https://www.youtube.com/watch?v=--FmExEAsM8")
+driver.get("https://www.youtube.com/watch?v=CM4CkVFmTds")
 
-URL = "https://www.youtube.com/watch?v=--FmExEAsM8"
+URL = "https://www.youtube.com/watch?v=CM4CkVFmTds"
 
 # 스크롤 내리기
 
